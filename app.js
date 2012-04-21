@@ -16,6 +16,16 @@ FlowerPlanet = (function(){
 			return assets[assetName];
 		};
 	})();
+
+	var TO_RADIANS = Math.PI/180;
+	function drawRotatedImage(image, x, y, angle) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle * TO_RADIANS);
+		ctx.drawImage(image, -(image.width/2), -(image.height/2));
+		ctx.restore();
+	}
+
 //Global Declarations
 
 	var canvas = document.getElementById("canvas");	
@@ -98,6 +108,7 @@ FlowerPlanet = (function(){
 				
 			}
 			
+			
 		};
 
 	})();
@@ -143,28 +154,31 @@ FlowerPlanet = (function(){
 			return {r:r, g:g, b:b, a:a};
 		};
 		
+		function createArrayForObject(funct, argLength){
+			return function(){
+				var r = [];
+				if(Object.prototype.toString.call( arguments[0] )=== '[object Array]'){ 
+					for(var i = 0; i < arguments[0].length; i+=argLength){
+						r.push(funct.apply(this, arguments[0].slice(i,i+argLength)));
+					}
+				}
+				else{
+					var argList = Array.prototype.slice.call(arguments, 0);
+					for(var i = 0; i < arguments.length; i+=argLength){
+						r.push(funct.apply(this, argList.slice(i, i+argLength)));
+					}
+
+				}
+				return r;
+			}
+		}
+		
 		function getCollisionBox(x, y, width, height){
 			return {x:x, y:y, width:width, height:height};
 		};
 		//Get point.
 		function gp(x,y){
 			return {x:x, y:y};
-		}
-		
-		function getPointList(){
-			var r = [];
-			if(Object.prototype.toString.call( arguments[0] )=== '[object Array]'){ 
-				for(var i = 0; i < arguments[0].length; i+=2){
-					r.push(gp(arguments[0][i], arguments[0][i+1]));
-				}
-			}
-			else{
-				for(var i = 0; i < arguments.length; i+=2){
-					r.push(gp(arguments[i], arguments[i+1]));
-				}
-
-			}
-			return r;
 		}
 
 		function generateCollisionBox(pointsList){
@@ -193,7 +207,9 @@ FlowerPlanet = (function(){
 	//	var b = generateCollisionBox(p);
 	//	console.log(pointList);;
 	//	console.log(checkPlayerCollision(b, trimList(p,b),[ getColor(0,0,0,0)]));
-		
+
+		return { checkPlayerCollision: checkPlayerCollision, getColor:createArrayForObject(getColor,4), getCollisionBox: getCollisionBox, getPointList:createArrayForObject(gp,2), generateCollisionBox:generateCollisionBox, trimList:trimList};
+				
 	})();
 
 	pixelStars.newStars(40);
@@ -202,9 +218,20 @@ FlowerPlanet = (function(){
 	function drawPlanet(){
 		var w = getAsset("planet").width/2;
 		var h = getAsset("planet").height/2;
-		ctx.drawImage(getAsset("planet"), (c_width/2)-w, (c_height/2)-h);	
+		//ctx.drawImage(getAsset("planet"), (c_width/2)-w, (c_height/2)-h);	
+		ctx.fillStyle="rgba(255,0,0,255)";
+		ctx.fillRect( (c_width/2)-w, (c_height/2)-h, 4, 200);
 	}
 
+	var drawGuy = (function(){
+		var x = player.startLocation.x, y = player.startLocation.y ,angle = 0;
+	
+		return function(){
+			x++;
+			console.log(gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(x,y,20,20), gameLogic.getPointList(0,0,19,19,0,19,0,19), gameLogic.getColor(255,0,0,255)));
+			drawRotatedImage(getAsset("dude"), x,y,angle);	
+		}
+	})();
 	//Update Function.
 	function update(){
 		ctx.fillStyle="rgb(0,36,73)";
@@ -212,6 +239,7 @@ FlowerPlanet = (function(){
 		pixelStars.update();
 		drawPlanet();
 		playerRender.render();
+		drawGuy();
 	};
 
 	setInterval("FlowerPlanet()",16);
