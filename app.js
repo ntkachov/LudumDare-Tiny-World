@@ -119,6 +119,81 @@ FlowerPlanet = (function(){
 		function preRender(x,y){
 			playerRender.setPrePoint(x,y);	
 		}
+
+		function checkPlayerCollision(collisionBox, collisionMap, collisionColors){
+			//collisionBox is the area of the canvas that requires the collision check
+			var imageData = ctx.getImageData(collisionBox.x, collisionBox.y, collisionBox.width, collisionBox.height);
+			//CollisionMap provides per-pixel collisions. It expects the x,ys of the pixels it should check 
+			for(var point in collisionMap){	
+				point = collisionMap[point];
+				var Y = point.y * collisionBox.width * 4;
+				Y += point.x * 4;
+				var ic = {r: imageData.data[Y], g: imageData.data[Y+1], b: imageData.data[Y+2], a: imageData.data[Y+3]};
+				for(var e in collisionColors){
+					e = collisionColors[e];
+					if(e.r == ic.r && e.g == ic.g & e.b == ic.b && e.a == ic.a){
+						return true;	
+					}
+				}
+			}
+			return false;
+		};
+
+		function getColor(r,g,b,a){
+			return {r:r, g:g, b:b, a:a};
+		};
+		
+		function getCollisionBox(x, y, width, height){
+			return {x:x, y:y, width:width, height:height};
+		};
+		//Get point.
+		function gp(x,y){
+			return {x:x, y:y};
+		}
+		
+		function getPointList(){
+			var r = [];
+			if(Object.prototype.toString.call( arguments[0] )=== '[object Array]'){ 
+				for(var i = 0; i < arguments[0].length; i+=2){
+					r.push(gp(arguments[0][i], arguments[0][i+1]));
+				}
+			}
+			else{
+				for(var i = 0; i < arguments.length; i+=2){
+					r.push(gp(arguments[i], arguments[i+1]));
+				}
+
+			}
+			return r;
+		}
+
+		function generateCollisionBox(pointsList){
+			var b = 0, t = c_height, r = 0, l = c_width;
+			for(var e in pointsList){
+				e = pointsList[e];
+				if(e.y > b) { b = e.y };
+				if(e.x > r) { r = e.x };
+				if(e.y < t) { t = e.y };
+				if(e.x < l) { l = e.x };
+			}
+			return {x:l, y:t, width: r - l, height: b - t};
+		}
+
+		function trimList(pointsList, collisionBox){
+			for(var e in pointsList){
+				pointsList[e].x -= collisionBox.x;
+				pointsList[e].y -= collisionBox.y;
+			}
+			return pointsList;	
+		}
+
+	//	var pointList = [];
+	//	for(var i = 0; i < 20; i++){ pointList.push(randomInt(0,1000)); pointList.push(randomInt(0,100));};
+	//	var p = getPointList(pointList);
+	//	var b = generateCollisionBox(p);
+	//	console.log(pointList);;
+	//	console.log(checkPlayerCollision(b, trimList(p,b),[ getColor(0,0,0,0)]));
+		
 	})();
 
 	pixelStars.newStars(40);
