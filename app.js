@@ -562,6 +562,8 @@ GameEngine = (function () {
 			//Render order matters. because we use colors to figure out if we are colliding we need to render the world first THEN render the guy THEN everything else
 			drawGuy.draw();
 			playerRender.render();
+			ctx.textAlign = "left";
+			ctx.fillStyle="white";
 			ctx.fillText(gameLogic.getCondition(), 10, 50);
 			gameLogic.checkLose();
 			
