@@ -230,7 +230,8 @@ FlowerPlanet = (function(){
 
 	var drawGuy = (function(){
 		var x = player.startLocation.x, y = player.startLocation.y ,angle = 0;
-		var currentPoint = -1, speed = 1;
+		var currentPoint = -1, speed = 3;
+		var distCovered = 0, totalDist = 0;
 		var p1,p2,deltax, deltay, t = 0;
 		function setNewPoints(){
 				p1 = playerRender.getPoint(currentPoint + 1);
@@ -243,20 +244,22 @@ FlowerPlanet = (function(){
 					return;	
 				}
 				t = 0;
+				distCovered = 0;
 				currentPoint++;
 				deltax = p2.x - p1.x;
 				deltay = p2.y - p1.y;
-				var dist = Math.sqrt((deltax*deltax)+(deltay*deltay));
-				deltax = deltax/dist;
-				deltay = deltay/dist;
+				totalDist = Math.sqrt((deltax*deltax)+(deltay*deltay));
+				deltax = (deltax/totalDist) * speed;
+				deltay = (deltay/totalDist) * speed;
 		}		
 
 		function nextCoord(){
-			if(Math.round(x) == Math.round(p2.x) && Math.round(y) == Math.round(p2.y)){
+			if(Math.round(distCovered) >= Math.round(totalDist)){
 				setNewPoints(currentPoint, currentPoint+1);
 			}
 			
 			t++;
+			distCovered += Math.sqrt((deltax*deltax)+(deltay*deltay));
 			x = (deltax * t) + p1.x;
 			y = (deltay * t) + p1.y;
 			return {x:x,y:y};	
@@ -265,7 +268,8 @@ FlowerPlanet = (function(){
 		setNewPoints(currentPoint, currentPoint+1);	
 		return function(){
 			var n = nextCoord();
-			console.log(gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(x,y,20,20), gameLogic.getPointList(0,0,19,19,0,19,0,19), gameLogic.getColor(255,0,0,255)));
+			var t = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(x,y,20,20), gameLogic.getPointList(0,0,19,19,0,19,0,19), gameLogic.getColor(255,0,0,255));
+			if(t){ ctx.fillText("Colliding", 10, 10) }	
 			drawRotatedImage(getAsset("dude"), x,y,angle);	
 		}
 	})();
