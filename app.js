@@ -1,4 +1,4 @@
-FlowerPlanet = (function(){
+FlowerPlanet = (function( ){
 
 	//Small Helper method for generating random integers
 	function randomInt(from, to){
@@ -27,10 +27,17 @@ FlowerPlanet = (function(){
 			ctx.restore();
 		};
 	})();
-		
-	function interpolate(x,x1,y1,x2,y2){
-		return y1+(y2-y1)((x-x1)/(x2-x1));
-	};	
+
+	function getOffset( el ) {
+		var _x = 0;
+		var _y = 0;
+		while( el && !isNaN( el.offsetLeft ) && !isNaN( el.offsetTop ) ) {
+		_x += el.offsetLeft - el.scrollLeft;
+		_y += el.offsetTop - el.scrollTop;
+		el = el.offsetParent;
+		}
+		return { top: _y, left: _x };
+	}
 
 //Global Declarations
 
@@ -38,6 +45,8 @@ FlowerPlanet = (function(){
 	var ctx = canvas.getContext("2d");	
 	var c_width = canvas.width;
 	var c_height = canvas.height;	
+	var c_offTop = getOffset(canvas).top;
+	var c_offLeft = getOffset(canvas).left;
 
 	var pixelStars = (function(){
 		var maxState = 3;
@@ -123,10 +132,10 @@ FlowerPlanet = (function(){
 
 	var gameLogic = (function(){
 		function mouseClick(event){
-			nextMove(event.offsetX, event.offsetY);	
+			nextMove(event.clientX - c_offLeft, event.clientY - c_offTop);	
 		};	
 		function mouseMove(event){
-			preRender(event.offsetX, event.offsetY);	
+			preRender(event.clientX - c_offLeft, event.clientY - c_offTop);	
 		};
 	
 		canvas.addEventListener("click", mouseClick, false);
@@ -270,7 +279,7 @@ FlowerPlanet = (function(){
 		resetGuy();
 		return function(){
 			var n = nextCoord();
-			var t = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x,n.y,20,20), gameLogic.getPointList(0,0,20,20,0,20,20,0), gameLogic.getColor(255,0,0,255));
+			var t = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x,n.y,20,20), gameLogic.getPointList(0,0,19,19,0,19,19,0), gameLogic.getColor(255,0,0,255));
 			if(t){
 				ctx.fillText("Colliding", 10, 10)
 				undo();
@@ -285,19 +294,19 @@ FlowerPlanet = (function(){
 	pixelStars.newStars(40);
 
 	//Draw the planet 
-	function drawPlanet(){
-		var w = getAsset("planet").width/2;
-		var h = getAsset("planet").height/2;
-		ctx.drawImage(getAsset("planet"), (c_width/2)-w, (c_height/2)-h);	
+	function drawPlanet(level){
+		var w = getAsset(level).width/2;
+		var h = getAsset(level).height/2;
+		ctx.drawImage(getAsset(level), (c_width/2)-w, (c_height/2)-h);	
 		//ctx.fillStyle="rgba(255,0,0,255)";
 		//ctx.fillRect( (c_width/2)-w, (c_height/2)-h, 4, 200);
 	}
 	//Update Function.
-	function update(){
+	function update(level){
 		ctx.fillStyle="rgb(0,36,73)";
 		ctx.fillRect(0,0,c_width,c_height);
-		pixelStars.update();
-		drawPlanet();
+		pixelStars.update(level);
+		drawPlanet("planet");
 		//Render order matters. because we use colors to figure out if we are colliding we need to render the world first THEN render the guy THEN everything else
 		drawGuy();
 		playerRender.render();
