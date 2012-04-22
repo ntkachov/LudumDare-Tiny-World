@@ -1,33 +1,38 @@
 {
-	"levelName": "planet",
-	"nextLevel": "level2",
+	"levelName": "l1",
+	"nextLevel": "l2",
 	"nextString": "Each planet is within another planet",
 	"start": {
-		"x": 200,
-		"y": 300
+		"x": 150,
+		"y": 150
 	},
 	"end": {
 		"x": 500,
 		"y": 500
 	},
 	"colors": [{
-		"r": 255,
-		"g": 0,
-		"b": 0,
+		"r": 71,
+		"g": 71,
+		"b": 71,
 		"a": 255
 	},{
-		"r": 0,
-		"g": 255,
-		"b": 0,
+		"r": 85,
+		"g": 85,
+		"b": 85,
 		"a": 255	
+	},{
+		"r": 100,
+		"g": 97,
+		"b": 80,
+		"a": 255
 	}],
 	"goalColor": {
-		"r": 0,
-		"g": 255,
-		"b": 0,
+		"r": 100,
+		"g": 97,
+		"b": 80,
 		"a": 255	
 	},
 	"collisions":[{"x":0,"y":0},{"x":14,"y":14},{"x":0,"y":14},{"x":14,"y":0}],
-	"winCondition":"Lines",
+	"winCondition":"None",
 	"winNumber": 2
 }

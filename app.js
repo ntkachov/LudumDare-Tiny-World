@@ -550,7 +550,7 @@ GameEngine = (function () {
 		ctx.drawImage(Assets.get(level), (c_width / 2) - w, (c_height / 2) - h);
 	}
 	
-	animation.fadeToBlack("The end of existance is coming. \n Get to the end.", "planet");
+	animation.fadeToBlack("The end of existence is coming. \n Get to next planet.", "l1");
 
 	//Update Function.
 	function update() {

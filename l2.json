@@ -1,30 +1,35 @@
 {
-	"levelName": "level2",
-	"nextLevel": "planet",
+	"levelName": "l2",
+	"nextLevel": "l3",
 	"nextString": "Each world smaller than the last",
 	"start": {
-		"x": 100,
-		"y": 100
+		"x": 300,
+		"y": 50
 	},
 	"end": {
 		"x": 500,
 		"y": 500
 	},
 	"colors": [{
-		"r": 255,
-		"g": 0,
-		"b": 0,
+		"r": 113,
+		"g": 77,
+		"b": 5,
 		"a": 255
 	},{
-		"r": 0,
-		"g": 255,
-		"b": 0,
+		"r": 180,
+		"g": 158,
+		"b": 34,
+		"a": 255	
+	},{
+		"r": 114,
+		"g": 166,
+		"b": 16,
 		"a": 255	
 	}],
 	"goalColor": {
-		"r": 0,
-		"g": 255,
-		"b": 0,
+		"r": 114,
+		"g": 166,
+		"b": 16,
 		"a": 255	
 	},
 	"collisions":[{"x":0,"y":0},{"x":14,"y":14},{"x":0,"y":14},{"x":14,"y":0}],
