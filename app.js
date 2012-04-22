@@ -17,14 +17,20 @@ FlowerPlanet = (function(){
 		};
 	})();
 
-	var TO_RADIANS = Math.PI/180;
-	function drawRotatedImage(image, x, y, angle) {
-		ctx.save();
-		ctx.translate(x, y);
-		ctx.rotate(angle * TO_RADIANS);
-		ctx.drawImage(image, -(image.width/2), -(image.height/2));
-		ctx.restore();
-	}
+	var drawRotatedImage= (function(){
+		var TO_RADIANS = Math.PI/180;
+		return function(image, x, y, angle) {
+			ctx.save();
+			ctx.translate(x, y);
+			ctx.rotate(angle * TO_RADIANS);
+			ctx.drawImage(image, -(image.width/2), -(image.height/2));
+			ctx.restore();
+		};
+	})();
+		
+	function interpolate(x,x1,y1,x2,y2){
+		return y1+(y2-y1)((x-x1)/(x2-x1));
+	};	
 
 //Global Declarations
 
@@ -78,12 +84,8 @@ FlowerPlanet = (function(){
 	
 	var playerRender = (function(){
 		
-		var points = [];
+		var points = [player.startLocation];
 		var prePoint = {x:-1, y:-1};
-		//debug testing	
-		for(var i =0 ;i < 200; i++){
-			//points.push({x:randomInt(0,c_width), y:randomInt(0, c_height)});
-		}
 		
 		return {
 			addPoint: function(x,y){
@@ -106,6 +108,9 @@ FlowerPlanet = (function(){
 				ctx.lineTo(prePoint.x, prePoint.y);
 				ctx.stroke();
 				
+			},
+			getPoint: function(i){
+				return points[i];
 			}
 			
 			
@@ -218,16 +223,48 @@ FlowerPlanet = (function(){
 	function drawPlanet(){
 		var w = getAsset("planet").width/2;
 		var h = getAsset("planet").height/2;
-		//ctx.drawImage(getAsset("planet"), (c_width/2)-w, (c_height/2)-h);	
-		ctx.fillStyle="rgba(255,0,0,255)";
-		ctx.fillRect( (c_width/2)-w, (c_height/2)-h, 4, 200);
+		ctx.drawImage(getAsset("planet"), (c_width/2)-w, (c_height/2)-h);	
+		//ctx.fillStyle="rgba(255,0,0,255)";
+		//ctx.fillRect( (c_width/2)-w, (c_height/2)-h, 4, 200);
 	}
 
 	var drawGuy = (function(){
 		var x = player.startLocation.x, y = player.startLocation.y ,angle = 0;
-	
+		var currentPoint = -1, speed = 1;
+		var p1,p2,deltax, deltay, t = 0;
+		function setNewPoints(){
+				p1 = playerRender.getPoint(currentPoint + 1);
+				p2 = playerRender.getPoint(currentPoint + 2);
+				if(p1 == undefined || p2 == undefined){
+					deltax = 0;
+					deltay = 0;
+					p1 = {x:x, y:y};
+					p2 = {x:x, y:y};
+					return;	
+				}
+				t = 0;
+				currentPoint++;
+				deltax = p2.x - p1.x;
+				deltay = p2.y - p1.y;
+				var dist = Math.sqrt((deltax*deltax)+(deltay*deltay));
+				deltax = deltax/dist;
+				deltay = deltay/dist;
+		}		
+
+		function nextCoord(){
+			if(Math.round(x) == Math.round(p2.x) && Math.round(y) == Math.round(p2.y)){
+				setNewPoints(currentPoint, currentPoint+1);
+			}
+			
+			t++;
+			x = (deltax * t) + p1.x;
+			y = (deltay * t) + p1.y;
+			return {x:x,y:y};	
+			
+		}
+		setNewPoints(currentPoint, currentPoint+1);	
 		return function(){
-			x++;
+			var n = nextCoord();
 			console.log(gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(x,y,20,20), gameLogic.getPointList(0,0,19,19,0,19,0,19), gameLogic.getColor(255,0,0,255)));
 			drawRotatedImage(getAsset("dude"), x,y,angle);	
 		}
