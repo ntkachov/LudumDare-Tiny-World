@@ -41,16 +41,24 @@ GameEngine = (function () {
 			left: _x
 		};
 	}
+	//Simple object equater used for colors. Don't use for anything serious	
+	function objEquals(o1, o2){
+		for(var o in o1){
+			if(o1[o] != o2[o]){return false;}
+		}
+		return true;
+	}
 	
 	function loadFile (sURL, timeout, fCallback /*, argumentToPass1, argumentToPass2, etc. */) {
-		var aPassArgs = Array.prototype.slice.call(arguments, 2), oReq = new XMLHttpRequest();
+		var oReq = new XMLHttpRequest();
 		oReq.ontimeout = function() {
 			console.log("The request timed out.");
 		}
 		oReq.onreadystatechange = function() {
 			if (oReq.readyState === 4) { 
 				if (oReq.status === 200) {
-					fCallback.apply(oReq, aPassArgs);
+					console.log(oReq);
+					fCallback(oReq.response);
 				} else {
 					console.log("Error", oReq.statusText);
 				}
@@ -112,8 +120,8 @@ GameEngine = (function () {
 
 	var player = {
 		startLocation: {
-			x: 200,// undefined,
-			y: 300//undefined
+			x: undefined,
+			y: undefined
 		},
 		endLocation: {
 			x: undefined,
@@ -160,6 +168,12 @@ GameEngine = (function () {
 			},
 			getPoint: function (i) {
 				return points[i];
+			},
+			getLines: function(){
+				return points.length -1 ;
+			},
+			reset: function(){
+				points = [player.startLocation];	
 			}
 
 
@@ -169,7 +183,9 @@ GameEngine = (function () {
 
 	var gameLogic = (function () {
 		function mouseClick(event) {
-			nextMove(event.clientX - c_offLeft, event.clientY - c_offTop);
+			if(checkCondition()){
+				nextMove(event.clientX - c_offLeft, event.clientY - c_offTop);
+			}
 		};
 
 		function mouseMove(event) {
@@ -204,7 +220,7 @@ GameEngine = (function () {
 				for (var e in collisionColors) {
 					e = collisionColors[e];
 					if (e.r == ic.r && e.g == ic.g & e.b == ic.b && e.a == ic.a) {
-						return true;
+						return ic;
 					}
 				}
 			}
@@ -282,13 +298,45 @@ GameEngine = (function () {
 			return pointsList;
 		}
 
+		function checkCondition(){	
+			if(levelStructure.winCondition === "None"){ return true; }
+			if(levelStructure.winCondition === "Timer"){ return true; }
+			if(levelStructure.winCondition === "Lines"){ return playerRender.getLines() < levelStructure.winNumber; }
+		}
+	
+		function win(){
+			console.log("I WIN");	
+		}
+	
+		function checkLoseConditions(){
+			if(!checkCondition()){
+				if(levelStructure.winCondition === "Lines" && drawGuy.stoped){
+					lose();
+				}
+				else if(levelStructure.winCondition === "Timer"){
+
+				}
+			}
+		}
+		
+		function lose(){
+			//fade to black,
+			levelStructure.loadLevel(levelStructure.level);
+			console.log("I LOSE");
+		}
+
 		return {
 			checkPlayerCollision: checkPlayerCollision,
 			getColor: createArrayForObject(getColor, 4),
 			getCollisionBox: getCollisionBox,
 			getPointList: createArrayForObject(gp, 2),
 			generateCollisionBox: generateCollisionBox,
-			trimList: trimList
+			trimList: trimList,
+			checkCondition: checkCondition,
+			win: win,
+			lose: lose,
+			checkLose: checkLoseConditions,
+
 		};
 
 	})();
@@ -319,8 +367,10 @@ GameEngine = (function () {
 					x: x,
 					y: y
 				};
+				drawGuy.stoped = true;
 				return;
 			}
+			drawGuy.stoped = false;
 			currentPoint++;
 			deltax = p2.x - p1.x;
 			deltay = p2.y - p1.y;
@@ -333,11 +383,9 @@ GameEngine = (function () {
 			if (Math.round(distCovered) >= Math.round(totalDist)) {
 				setNewPoints(currentPoint, currentPoint + 1);
 			}
-
-			t++;
-			distCovered += Math.sqrt((deltax * deltax) + (deltay * deltay));
 			var _x = (deltax * t) + p1.x;
 			var _y = (deltay * t) + p1.y;
+			
 			return {
 				x: _x,
 				y: _y
@@ -348,9 +396,16 @@ GameEngine = (function () {
 		function moveGuy(coords) {
 			x = coords.x;
 			y = coords.y;
+			t++;
+			distCovered += Math.sqrt((deltax * deltax) + (deltay * deltay));
 		}
 
 		function resetGuy() {
+			deltax = 0, deltay = 0;
+			p1
+			t = 0;
+			distCovered = 0;
+			totalDist = 0 ;
 			currentPoint = -1;
 			setNewPoints();
 		}
@@ -361,15 +416,18 @@ GameEngine = (function () {
 			setNewPoints();
 			moveGuy(playerRender.getPoint(currentPoint + 1));
 		}
-		resetGuy();
 		function draw() {
 			var n = nextCoord();
-			var t = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x, n.y, 15, 20 ), gameLogic.getPointList(0, 0, 14, 14, 0, 14, 14, 0), gameLogic.getColor(255, 0, 0, 255));
-			if (t) {
+			var collisionDetect = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x, n.y, 15, 20 ), gameLogic.getPointList(0, 0, 14, 14, 0, 14, 14, 0), levelStructure.collisionColors);
+			if (collisionDetect !== false && !objEquals(collisionDetect, levelStructure.goalColor)) {
 				ctx.fillText("Colliding", 10, 10)
 				undo();
-			} else {
+			} else if(collisionDetect == false){
 				moveGuy(n);
+			}
+			else{
+				//win
+				console.log("win");
 			}
 			drawRotatedImage(getAsset("dude"), x, y, angle);
 		}
@@ -381,32 +439,42 @@ GameEngine = (function () {
 	})();
 
 	var levelStructure = (function(){
-		var level = "planet";
+		var level = "";
 		var collisionMap = [];
 		var collisionColors = {};
+		var goalColor = {};
+		var winCondition = "None";
 		function getCollisionColor(name){
 			return collisionColor[name];
 		};
 		function loadLevel(levelname){
 			loadFile(levelname + ".json", 45, parseLevel);
-			level = levelname;
+			levelStructure.level = levelname;
 		};
 		function parseLevel(data){
-			var level = JSON.parse(data);
-			player.startLocation = level.start;
-			player.endLocation = level.end;
-			collisionColors = level.colors;
+			var lvl = JSON.parse(data);
+			player.startLocation = lvl.start;
+			player.endLocation = lvl.end;
+			levelStructure.collisionColors = lvl.colors;
+			levelStructure.goalColor = lvl.goalColor;
+			levelStructure.winCondition = lvl.winCondition;
+			levelStructure.winNumber = lvl.winNumber;
+			playerRender.reset();
+			drawGuy.reset();
+			levelStructure.doneLoading=true;
 		};
 		function resetLevel(levelname){
 			loadLevel(levelname);
-			drawGuy.reset();	
-				
+			playerRender.reset();
+			drawGuy.reset();		
 		};
 		return{
 			level: level,
 			playerCollisionMap: collisionMap,
 			collisionColors: collisionColors,
-			loadLevel:loadLevel
+			loadLevel:loadLevel,
+			goalColor: goalColor,
+			doneLoading:false
 		}		
 	})();
 
@@ -419,16 +487,22 @@ GameEngine = (function () {
 		ctx.drawImage(getAsset(level), (c_width / 2) - w, (c_height / 2) - h);
 	}
 	
+	levelStructure.loadLevel("planet");
 
 	//Update Function.
-	function update(level) {
+	function update() {
 		ctx.fillStyle = "rgb(0,36,73)";
 		ctx.fillRect(0, 0, c_width, c_height);
-		pixelStars.update(level);
-		drawPlanet("planet");
-		//Render order matters. because we use colors to figure out if we are colliding we need to render the world first THEN render the guy THEN everything else
-		drawGuy.draw();
-		playerRender.render();
+		pixelStars.update();
+		if(levelStructure.doneLoading){
+			drawPlanet(levelStructure.level);
+			//Render order matters. because we use colors to figure out if we are colliding we need to render the world first THEN render the guy THEN everything else
+			drawGuy.draw();
+			playerRender.render();
+			ctx.fillText(gameLogic.checkCondition(), 10, 30);
+			gameLogic.checkLose();
+			
+		}
 	};
 
 	setInterval("GameEngine()", 16);
