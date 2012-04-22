@@ -244,8 +244,15 @@ GameEngine = (function () {
 			preRender(event.clientX - c_offLeft, event.clientY - c_offTop);
 		};
 
+		function keyPress(event){
+			if(event.keyCode == 191){
+				gameLogic.win();
+			}
+		}
+
 		canvas.addEventListener("click", mouseClick, false);
 		canvas.addEventListener("mousemove", mouseMove, false);
+		document.addEventListener("keyup", keyPress, false);
 
 		function nextMove(x, y) {
 			playerRender.addPoint(x, y);
@@ -491,7 +498,7 @@ GameEngine = (function () {
 		}
 		function draw() {
 			var n = nextCoord();
-			var collisionDetect = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x, n.y, 15, 20 ), gameLogic.getPointList(0, 0, 14, 14, 0, 14, 14, 0), levelStructure.collisionColors);
+			var collisionDetect = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x, n.y, 16, 20 ), gameLogic.getPointList(0, 0, 15, 15, 0, 15, 15, 0), levelStructure.collisionColors);
 			if (collisionDetect !== false && !objEquals(collisionDetect, levelStructure.goalColor)) {
 				ctx.fillText("Colliding", 10, 10)
 				undo();

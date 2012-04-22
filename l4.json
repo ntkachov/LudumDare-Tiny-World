@@ -1,0 +1,43 @@
+{
+	"levelName": "l4",
+	"nextLevel": "l5",
+	"nextString": "Some try to drain life.",
+	"start": {
+		"x": 600,
+		"y": 250
+	},
+	"end": {
+		"x": 500,
+		"y": 500
+	},
+	"colors": [{
+		"r": 165,
+		"g": 153,
+		"b": 17,
+		"a": 255
+	},{
+		"r": 149,
+		"g": 138,
+		"b": 15,
+		"a": 255	press
+	},{
+		"r": 107,
+		"g": 99,
+		"b": 11,
+		"a": 255
+	},{
+		"r": 149,
+		"g": 15,
+		"b": 89,
+		"a": 255	
+	}],
+	"goalColor": {
+		"r": 149,
+		"g": 15,
+		"b": 89,
+		"a": 255	
+	},
+	"collisions":[{"x":0,"y":0},{"x":14,"y":14},{"x":0,"y":14},{"x":14,"y":0}],
+	"winCondition":"Lines",
+	"winNumber": 5
+}

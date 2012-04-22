@@ -1,7 +1,7 @@
 {
 	"levelName": "l1",
 	"nextLevel": "l2",
-	"nextString": "Each planet is within another planet",
+	"nextString": "Each planet is within another planet, each smaller than the last.",
 	"start": {
 		"x": 150,
 		"y": 150
