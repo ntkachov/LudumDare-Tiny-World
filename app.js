@@ -357,6 +357,7 @@ GameEngine = (function () {
 		}
 		
 		var won = false;
+		var lost = false;
 		function win(){
 			if(won){return;}
 			animation.fadeToBlack(levelStructure.nextLevelString, levelStructure.nextLevel);
@@ -365,6 +366,7 @@ GameEngine = (function () {
 		
 		function reset(){
 			won = false;
+			lost = false;
 		}
 	
 		function checkLoseConditions(){
@@ -380,7 +382,10 @@ GameEngine = (function () {
 		
 		function lose(){
 			//fade to black,
-			levelStructure.loadLevel(levelStructure.level);
+			if(lost){return;}
+			animation.fadeToBlack("Try Again", levelStructure.level);
+			lost = true;
+			//levelStructure.loadLevel(levelStructure.level);
 		}
 
 		function conditionString(){
