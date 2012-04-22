@@ -1,10 +1,10 @@
 {
-	"levelName": "planet",
-	"nextLevel": "level2",
-	"nextString": "Each planet is within another planet",
+	"levelName": "level2",
+	"nextLevel": "planet",
+	"nextString": "Each world smaller than the last",
 	"start": {
-		"x": 200,
-		"y": 300
+		"x": 100,
+		"y": 100
 	},
 	"end": {
 		"x": 500,
@@ -29,5 +29,5 @@
 	},
 	"collisions":[{"x":0,"y":0},{"x":14,"y":14},{"x":0,"y":14},{"x":14,"y":0}],
 	"winCondition":"Lines",
-	"winNumber": 2
+	"winNumber": 5
 }

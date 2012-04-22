@@ -4,17 +4,25 @@ GameEngine = (function () {
 	function randomInt(from, to) {
 		return Math.round((Math.random() * (to - from)) + from);
 	};
-
-	var getAsset = (function () {
+	var Assets = (function () {
 		var assets = {}
-
-		return function (assetName) {
-			if (assets[assetName] == undefined) {
-				assets[assetName] = new Image();
-				assets[assetName].src = assetName + ".png";
+		return {
+			get:function (assetName) {
+				if (assets[assetName] == undefined) {
+					assets[assetName] = new Image();
+					assets[assetName].src = assetName + ".png";
+				}
+				return assets[assetName];
+			},
+			isDone: function(){
+				for(var i in assets){
+					if(!assets[i].complete){	
+						return false;
+					}
+				}
+				return true;
 			}
-			return assets[assetName];
-		};
+		}
 	})();
 
 	var drawRotatedImage = (function () {
@@ -116,6 +124,50 @@ GameEngine = (function () {
 				}
 			}
 		};
+	})();
+
+	var animation = (function(){
+		var blackSrceen = 0;
+		var transition = 0;
+		var textRead = 60;
+		var loaded = true;
+		var blackText = "";
+		var next = "";
+		function fadeToBlack(showstring, nextlevel, readTime){
+			blackText = showstring;
+			next = nextlevel;
+			blackScreen = 0.01;	
+			transition = 0.01;
+			loaded = false;
+			readTime == undefined? textRead = 60: textRead = readTime;	
+		}
+		function animate(){
+			if(blackScreen > 0){
+				blackScreen+= transition;
+				if(blackScreen >= 1){
+					blackScreen = 1;	
+					if(levelStructure.doneLoading && Assets.isDone() && transition > 0 && textRead <= 0){
+						transition *= -1;
+					}
+					if(!loaded){
+						levelStructure.loadLevel(next);
+						loaded = true;
+					}
+					textRead--;	
+				}
+				if(blackScreen >= 0){
+					ctx.fillStyle="rgba(0,0,0,"+blackScreen +")"
+					ctx.fillRect(0,0, c_width, c_height);
+					ctx.fillStyle="rgba(255,255,255,"+blackScreen +")"
+					ctx.textAlign = "center";
+					ctx.fillText(blackText, c_width/2, c_height/2);	
+				}
+			}
+		}
+		return {
+			fadeToBlack:fadeToBlack,
+			animate: animate
+		}
 	})();
 
 	var player = {
@@ -303,9 +355,16 @@ GameEngine = (function () {
 			if(levelStructure.winCondition === "Timer"){ return true; }
 			if(levelStructure.winCondition === "Lines"){ return playerRender.getLines() < levelStructure.winNumber; }
 		}
-	
+		
+		var won = false;
 		function win(){
-			gameLogic.iwin = "You Win!";	
+			if(won){return;}
+			animation.fadeToBlack(levelStructure.nextLevelString, levelStructure.nextLevel);
+			won = true;
+		}
+		
+		function reset(){
+			won = false;
 		}
 	
 		function checkLoseConditions(){
@@ -322,7 +381,6 @@ GameEngine = (function () {
 		function lose(){
 			//fade to black,
 			levelStructure.loadLevel(levelStructure.level);
-			console.log("I LOSE");
 		}
 
 		function conditionString(){
@@ -340,12 +398,12 @@ GameEngine = (function () {
 			trimList: trimList,
 			checkCondition: checkCondition,
 			win: win,
+			reset: reset,
 			lose: lose,
 			checkLose: checkLoseConditions,
 			getCondition: conditionString,
 				
 			//Dummy. Winning will be changed
-			iwin:""
 
 		};
 
@@ -439,7 +497,7 @@ GameEngine = (function () {
 				//win
 				gameLogic.win();
 			}
-			drawRotatedImage(getAsset("dude"), x, y, angle);
+			drawRotatedImage(Assets.get("dude"), x, y, angle);
 		}
 		return { 
 			draw: draw,
@@ -449,11 +507,6 @@ GameEngine = (function () {
 	})();
 
 	var levelStructure = (function(){
-		var level = "";
-		var collisionMap = [];
-		var collisionColors = {};
-		var goalColor = {};
-		var winCondition = "None";
 		function getCollisionColor(name){
 			return collisionColor[name];
 		};
@@ -469,21 +522,21 @@ GameEngine = (function () {
 			levelStructure.goalColor = lvl.goalColor;
 			levelStructure.winCondition = lvl.winCondition;
 			levelStructure.winNumber = lvl.winNumber;
+			levelStructure.nextLevel = lvl.nextLevel;
+			levelStructure.nextLevelString = lvl.nextString;
 			playerRender.reset();
 			drawGuy.reset();
+			gameLogic.reset();
 			levelStructure.doneLoading=true;
 		};
 		function resetLevel(levelname){
 			loadLevel(levelname);
 			playerRender.reset();
 			drawGuy.reset();		
+			gameLogic.reset();
 		};
 		return{
-			level: level,
-			playerCollisionMap: collisionMap,
-			collisionColors: collisionColors,
 			loadLevel:loadLevel,
-			goalColor: goalColor,
 			doneLoading:false
 		}		
 	})();
@@ -492,28 +545,32 @@ GameEngine = (function () {
 
 	//Draw the planet 
 	function drawPlanet(level) {
-		var w = getAsset(level).width / 2;
-		var h = getAsset(level).height / 2;
-		ctx.drawImage(getAsset(level), (c_width / 2) - w, (c_height / 2) - h);
+		var w = Assets.get(level).width / 2;
+		var h = Assets.get(level).height / 2;
+		ctx.drawImage(Assets.get(level), (c_width / 2) - w, (c_height / 2) - h);
 	}
 	
-	levelStructure.loadLevel("planet");
+	animation.fadeToBlack("The end of existance is coming. \n Get to the end.", "planet");
 
 	//Update Function.
 	function update() {
-		ctx.fillStyle = "rgb(0,36,73)";
-		ctx.fillRect(0, 0, c_width, c_height);
-		pixelStars.update();
 		if(levelStructure.doneLoading){
+			ctx.fillStyle = "rgb(0,36,73)";
+			ctx.fillRect(0, 0, c_width, c_height);
+			pixelStars.update();
 			drawPlanet(levelStructure.level);
 			//Render order matters. because we use colors to figure out if we are colliding we need to render the world first THEN render the guy THEN everything else
 			drawGuy.draw();
 			playerRender.render();
-			ctx.fillText(gameLogic.iwin, 10, 30);
 			ctx.fillText(gameLogic.getCondition(), 10, 50);
 			gameLogic.checkLose();
 			
 		}
+		else{
+			ctx.fillStyle="black";
+			ctx.fillRect(0,0,c_width, c_height);
+		}
+		animation.animate();
 	};
 
 	setInterval("GameEngine()", 16);
