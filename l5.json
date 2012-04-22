@@ -1,0 +1,40 @@
+{
+	"levelName": "l5",
+	"nextLevel": "l6",
+	"nextString": "Some try to wash themselves away.",
+	"start": {
+		"x": 125,
+		"y": 400
+	},
+	"end": {
+		"x": 500,
+		"y": 500
+	},
+	"colors": [{
+		"r": 61,
+		"g": 32,
+		"b": 181,
+		"a": 255
+	},{
+		"r": 75,
+		"g": 70,
+		"b": 70,
+		"a": 255
+	},{
+		"r": 149,
+		"g": 15,
+		"b": 89,
+		"a": 255
+	}],
+	"goalColor": {
+		"r": 61,
+		"g": 32,
+		"b": 181,
+		"a": 255	
+	},
+	"collisions":[{"x":0,"y":0},{"x":14,"y":14},{"x":0,"y":14},{"x":14,"y":0}],
+	"winCondition":"Lines",
+	"winNumber": 1,
+	"animation:":"Rotate",
+	"animationParam": 3
+}
