@@ -305,7 +305,7 @@ GameEngine = (function () {
 		}
 	
 		function win(){
-			console.log("I WIN");	
+			gameLogic.iwin = "You Win!";	
 		}
 	
 		function checkLoseConditions(){
@@ -325,6 +325,12 @@ GameEngine = (function () {
 			console.log("I LOSE");
 		}
 
+		function conditionString(){
+			if(levelStructure.winCondition === "Lines"){ return "Moves Remaining: " + (levelStructure.winNumber-playerRender.getLines());  }
+			else { return ""}	
+
+		}
+
 		return {
 			checkPlayerCollision: checkPlayerCollision,
 			getColor: createArrayForObject(getColor, 4),
@@ -336,6 +342,10 @@ GameEngine = (function () {
 			win: win,
 			lose: lose,
 			checkLose: checkLoseConditions,
+			getCondition: conditionString,
+				
+			//Dummy. Winning will be changed
+			iwin:""
 
 		};
 
@@ -427,7 +437,7 @@ GameEngine = (function () {
 			}
 			else{
 				//win
-				console.log("win");
+				gameLogic.win();
 			}
 			drawRotatedImage(getAsset("dude"), x, y, angle);
 		}
@@ -499,7 +509,8 @@ GameEngine = (function () {
 			//Render order matters. because we use colors to figure out if we are colliding we need to render the world first THEN render the guy THEN everything else
 			drawGuy.draw();
 			playerRender.render();
-			ctx.fillText(gameLogic.checkCondition(), 10, 30);
+			ctx.fillText(gameLogic.iwin, 10, 30);
+			ctx.fillText(gameLogic.getCondition(), 10, 50);
 			gameLogic.checkLose();
 			
 		}
