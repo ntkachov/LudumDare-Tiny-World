@@ -23,7 +23,7 @@ FlowerPlanet = (function(){
 			ctx.save();
 			ctx.translate(x, y);
 			ctx.rotate(angle * TO_RADIANS);
-			ctx.drawImage(image, -(image.width/2), -(image.height/2));
+			ctx.drawImage(image, 0, 0);
 			ctx.restore();
 		};
 	})();
@@ -94,6 +94,9 @@ FlowerPlanet = (function(){
 			setPrePoint: function(x, y){
 				prePoint.x = x; 
 				prePoint.y = y;
+			},
+			removeLastPoint: function(){
+				points.splice(points.length-1, 1);
 			},
 			render: function(){
 				ctx.beginPath();
@@ -206,45 +209,30 @@ FlowerPlanet = (function(){
 			return pointsList;	
 		}
 
-	//	var pointList = [];
-	//	for(var i = 0; i < 20; i++){ pointList.push(randomInt(0,1000)); pointList.push(randomInt(0,100));};
-	//	var p = getPointList(pointList);
-	//	var b = generateCollisionBox(p);
-	//	console.log(pointList);;
-	//	console.log(checkPlayerCollision(b, trimList(p,b),[ getColor(0,0,0,0)]));
-
 		return { checkPlayerCollision: checkPlayerCollision, getColor:createArrayForObject(getColor,4), getCollisionBox: getCollisionBox, getPointList:createArrayForObject(gp,2), generateCollisionBox:generateCollisionBox, trimList:trimList};
 				
 	})();
 
-	pixelStars.newStars(40);
-
-	//Draw the planet 
-	function drawPlanet(){
-		var w = getAsset("planet").width/2;
-		var h = getAsset("planet").height/2;
-		ctx.drawImage(getAsset("planet"), (c_width/2)-w, (c_height/2)-h);	
-		//ctx.fillStyle="rgba(255,0,0,255)";
-		//ctx.fillRect( (c_width/2)-w, (c_height/2)-h, 4, 200);
-	}
 
 	var drawGuy = (function(){
 		var x = player.startLocation.x, y = player.startLocation.y ,angle = 0;
 		var currentPoint = -1, speed = 3;
 		var distCovered = 0, totalDist = 0;
-		var p1,p2,deltax, deltay, t = 0;
+		var addp, p1,p2,deltax, deltay, t = 0;
 		function setNewPoints(){
+				t = 0;
+				distCovered = 0;
+				totalDist = 0;
 				p1 = playerRender.getPoint(currentPoint + 1);
 				p2 = playerRender.getPoint(currentPoint + 2);
 				if(p1 == undefined || p2 == undefined){
 					deltax = 0;
 					deltay = 0;
-					p1 = {x:x, y:y};
-					p2 = {x:x, y:y};
+					//p1 = {x:x, y:y};
+					//p2 = {x:x, y:y};
+					addp = {x:x, y:y};
 					return;	
 				}
-				t = 0;
-				distCovered = 0;
 				currentPoint++;
 				deltax = p2.x - p1.x;
 				deltay = p2.y - p1.y;
@@ -260,27 +248,59 @@ FlowerPlanet = (function(){
 			
 			t++;
 			distCovered += Math.sqrt((deltax*deltax)+(deltay*deltay));
-			x = (deltax * t) + p1.x;
-			y = (deltay * t) + p1.y;
-			return {x:x,y:y};	
+			var _x = (deltax * t) + p1.x;
+			var _y = (deltay * t) + p1.y;
+			return {x:_x,y:_y};	
 			
 		}
-		setNewPoints(currentPoint, currentPoint+1);	
+		function moveGuy(coords){
+			x = coords.x;
+			y = coords.y;
+		}
+		function resetGuy(){
+			currentPoint = -1;
+			setNewPoints();	
+		}
+		function undo(){
+			playerRender.removeLastPoint();
+			currentPoint--;
+			setNewPoints();
+			moveGuy(playerRender.getPoint(currentPoint+1));
+		}
+		resetGuy();
 		return function(){
 			var n = nextCoord();
-			var t = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(x,y,20,20), gameLogic.getPointList(0,0,19,19,0,19,0,19), gameLogic.getColor(255,0,0,255));
-			if(t){ ctx.fillText("Colliding", 10, 10) }	
+			var t = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x,n.y,20,20), gameLogic.getPointList(0,0,20,20,0,20,20,0), gameLogic.getColor(255,0,0,255));
+			if(t){
+				ctx.fillText("Colliding", 10, 10)
+				undo();
+			}	
+			else{
+				moveGuy(n);
+			}
 			drawRotatedImage(getAsset("dude"), x,y,angle);	
 		}
 	})();
+
+	pixelStars.newStars(40);
+
+	//Draw the planet 
+	function drawPlanet(){
+		var w = getAsset("planet").width/2;
+		var h = getAsset("planet").height/2;
+		ctx.drawImage(getAsset("planet"), (c_width/2)-w, (c_height/2)-h);	
+		//ctx.fillStyle="rgba(255,0,0,255)";
+		//ctx.fillRect( (c_width/2)-w, (c_height/2)-h, 4, 200);
+	}
 	//Update Function.
 	function update(){
 		ctx.fillStyle="rgb(0,36,73)";
 		ctx.fillRect(0,0,c_width,c_height);
 		pixelStars.update();
 		drawPlanet();
-		playerRender.render();
+		//Render order matters. because we use colors to figure out if we are colliding we need to render the world first THEN render the guy THEN everything else
 		drawGuy();
+		playerRender.render();
 	};
 
 	setInterval("FlowerPlanet()",16);
