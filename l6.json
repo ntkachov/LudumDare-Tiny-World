@@ -1,10 +1,10 @@
 {
-	"levelName": "l5",
-	"nextLevel": "l6",
-	"nextString": "Ran out of time :( Sorry.",
+	"levelName": "l6",
+	"nextLevel": "l1",
+	"nextString": "I ran out of time :( sorry.",
 	"start": {
 		"x": 125,
-		"y": 400
+		"y": 200
 	},
 	"end": {
 		"x": 500,
@@ -34,7 +34,8 @@
 	},
 	"collisions":[{"x":0,"y":0},{"x":14,"y":14},{"x":0,"y":14},{"x":14,"y":0}],
 	"winCondition":"Lines",
-	"winNumber": 1,
-	"animation":"Rotate",
-	"animationParam": 1.75
+	"winNumber": 2,
+	"animation":"Frame",
+	"animationParam": 7,
+	"animationLoop":true
 }

@@ -38,6 +38,6 @@
 		"a": 255	
 	},
 	"collisions":[{"x":0,"y":0},{"x":14,"y":14},{"x":0,"y":14},{"x":14,"y":0}],
-	"winCondition":"Lines",
-	"winNumber": 5
+	"winCondition":"Timer",
+	"winNumber": 10
 }

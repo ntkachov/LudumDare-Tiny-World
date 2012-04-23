@@ -21,6 +21,11 @@ GameEngine = (function () {
 					}
 				}
 				return true;
+			},
+			loadBulk: function (assetBaseName, assetRangeStart, assetRangeEnd){
+				for(var i = assetRangeStart; i < assetRangeEnd; i++){
+					Assets.get(assetBaseName + "_" + i);
+				}
 			}
 		}
 	})();
@@ -31,7 +36,7 @@ GameEngine = (function () {
 			ctx.save();
 			ctx.translate(x, y);
 			ctx.rotate(angle * TO_RADIANS);
-			ctx.drawImage(image, 0, 0);
+			ctx.drawImage(image, 0 - image.width/2, 0 - image.height/2);
 			ctx.restore();
 		};
 	})();
@@ -164,9 +169,31 @@ GameEngine = (function () {
 				}
 			}
 		}
+		var animationHash = {};
+		function startAnimation(sprite, length, loop){
+			Assets.loadBulk(sprite, 0, length);
+			animationHash[sprite] = {t:-1,l:length, loop: loop, d:5};
+		}
+		function getFrame(sprite){
+			if(animationHash[sprite].l > animationHash[sprite].t){
+				if(animationHash[sprite].d == 0){
+					animationHash[sprite].t++;
+					animationHash[sprite].d = 4;
+				}
+				else{
+					animationHash[sprite].d--;
+				}
+			}
+			else if(animationHash[sprite].loop === true){
+					animationHash[sprite].t = animationHash[sprite].t % animationHash[sprite].l;
+			}
+			return Assets.get(sprite+"_"+animationHash[sprite].t);
+		};
 		return {
 			fadeToBlack:fadeToBlack,
-			animate: animate
+			animate: animate,
+			startAnimation: startAnimation,
+			getFrame: getFrame,
 		}
 	})();
 
@@ -264,7 +291,7 @@ GameEngine = (function () {
 
 		function checkPlayerCollision(collisionBox, collisionMap, collisionColors) {
 			//collisionBox is the area of the canvas that requires the collision check
-			var imageData = ctx.getImageData(collisionBox.x, collisionBox.y, collisionBox.width, collisionBox.height);
+			var imageData = ctx.getImageData(collisionBox.x - collisionBox.width/2, collisionBox.y - collisionBox.height/2, collisionBox.width, collisionBox.height);
 			//CollisionMap provides per-pixel collisions. It expects the x,ys of the pixels it should check 
 			for (var point in collisionMap) {
 				point = collisionMap[point];
@@ -359,14 +386,14 @@ GameEngine = (function () {
 
 		function checkCondition(){	
 			if(levelStructure.winCondition === "None"){ return true; }
-			if(levelStructure.winCondition === "Timer"){ return true; }
+			if(levelStructure.winCondition === "Timer"){ return updateTimer() }
 			if(levelStructure.winCondition === "Lines"){ return playerRender.getLines() < levelStructure.winNumber; }
 		}
 		
 		var won = false;
 		var lost = false;
 		function win(){
-			if(won){return;}
+			if(won || lost){return;}
 			animation.fadeToBlack(levelStructure.nextLevelString, levelStructure.nextLevel);
 			won = true;
 		}
@@ -374,6 +401,8 @@ GameEngine = (function () {
 		function reset(){
 			won = false;
 			lost = false;
+			startTimer(levelStructure.winNumber);
+			
 		}
 	
 		function checkLoseConditions(){
@@ -382,14 +411,14 @@ GameEngine = (function () {
 					lose();
 				}
 				else if(levelStructure.winCondition === "Timer"){
-
+					lose();
 				}
 			}
 		}
 		
 		function lose(){
 			//fade to black,
-			if(lost){return;}
+			if(lost || won){return;}
 			animation.fadeToBlack("Try Again", levelStructure.level);
 			lost = true;
 			//levelStructure.loadLevel(levelStructure.level);
@@ -397,8 +426,26 @@ GameEngine = (function () {
 
 		function conditionString(){
 			if(levelStructure.winCondition === "Lines"){ return "Moves Remaining: " + (levelStructure.winNumber-playerRender.getLines());  }
+			if(levelStructure.winCondition === "Timer"){ return "Time Remainint: " + getTime()}
 			else { return ""}	
 
+		}
+			
+		var Timer = 0;
+		var timerStart = 0;
+		var totalTime = 0;
+		function startTimer(time){
+			Timer = time * 1000;
+			totalTime = Timer;
+			timerStart = new Date().getTime();
+		}
+		function updateTimer(){
+			Timer = new Date().getTime() - timerStart;
+			return (totalTime - Timer) > 0;
+		}
+		function getTime(){
+			var d =  new Date(totalTime - Timer);
+			return d.getSeconds() + "." + d.getMilliseconds();
 		}
 
 		return {
@@ -498,7 +545,18 @@ GameEngine = (function () {
 		}
 		function draw() {
 			var n = nextCoord();
-			var collisionDetect = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x, n.y, 16, 20 ), gameLogic.getPointList(0, 0, 15, 15, 0, 15, 15, 0), levelStructure.collisionColors);
+			var collisionDetect = gameLogic.checkPlayerCollision(gameLogic.getCollisionBox(n.x, n.y, 16, 20 ), gameLogic.getPointList(
+					6,0,
+					8,0,
+					9,1,
+					9,3,
+					9,10,
+					8,14,
+					7,15,
+					6,18,
+					4,19,
+					2,16,
+					3,8), levelStructure.collisionColors);
 			if (collisionDetect !== false && !objEquals(collisionDetect, levelStructure.goalColor)) {
 				ctx.fillText("Colliding", 10, 10)
 				undo();
@@ -536,6 +594,9 @@ GameEngine = (function () {
 			levelStructure.winNumber = lvl.winNumber;
 			levelStructure.nextLevel = lvl.nextLevel;
 			levelStructure.nextLevelString = lvl.nextString;
+			levelStructure.planetAnimation = lvl.animation;
+			levelStructure.animationParam = lvl.animationParam;
+			levelStructure.animationLoop = lvl.animationLoop == undefined? false: lvl.animationLoop;
 			playerRender.reset();
 			drawGuy.reset();
 			gameLogic.reset();
@@ -555,14 +616,30 @@ GameEngine = (function () {
 
 	pixelStars.newStars(40);
 
+	var planetRotation = 0;
+	var animStarted = false;
 	//Draw the planet 
 	function drawPlanet(level) {
 		var w = Assets.get(level).width / 2;
 		var h = Assets.get(level).height / 2;
-		ctx.drawImage(Assets.get(level), (c_width / 2) - w, (c_height / 2) - h);
+		var image = Assets.get(level);
+		if(levelStructure.planetAnimation == "Rotate"){
+			planetRotation += levelStructure.animationParam;
+			planetRotation = planetRotation%360;
+		}	
+		else if(levelStructure.planetAnimation == "Frame"){
+			if(!animStarted){
+				animation.startAnimation(level, levelStructure.animationParam, levelStructure.animationLoop);
+				animStarted = true;
+			}
+			image = animation.getFrame(level);	
+		}
+		
+		drawRotatedImage(image, (c_width / 2), (c_height / 2), planetRotation);
 	}
 	
-	animation.fadeToBlack("The end of existence is coming. \n Get to next planet.", "l1");
+	animation.fadeToBlack("The end of existence is coming. Get to next planet.", "l1");
+	ctx.font="18pt Helvetica";
 
 	//Update Function.
 	function update() {
